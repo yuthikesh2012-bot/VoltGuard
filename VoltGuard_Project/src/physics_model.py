@@ -23,6 +23,7 @@ from the network bridge once the C++ parser is wired in.
 """
 
 from dataclasses import dataclass
+
 import numpy as np
 from scipy import integrate
 

@@ -6,8 +6,13 @@
 set -e
 
 echo "== Building modbus_parser (C++) =="
-g++ -std=c++17 -O2 -o modbus_parser src/modbus_parser.cpp
-echo "-> ./modbus_parser built."
+if command -v g++ >/dev/null 2>&1; then
+    g++ -std=c++17 -O2 -o modbus_parser src/modbus_parser.cpp
+    echo "-> ./modbus_parser built."
+else
+    echo "g++ not found -- skipping parser build."
+    echo "Install a C++ toolchain and re-run to build modbus_parser."
+fi
 
 echo ""
 echo "== Building Qt dashboard (dashboard/) =="

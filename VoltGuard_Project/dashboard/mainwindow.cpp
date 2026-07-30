@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QWidget>
 #include <QTableWidget>
+#include <QAbstractItemView>
 #include <QHeaderView>
 #include <QLabel>
 #include <QPushButton>
