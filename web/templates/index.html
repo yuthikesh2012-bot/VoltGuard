@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoltGuard — Physics Firewall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2 L36 11 V29 L20 38 L4 29 V11 Z" stroke="var(--amber)" stroke-width="2"/>
+      <path d="M21 9 L11 21 H18 L16 31 L29 17 H21 L23 9 Z" fill="var(--amber)"/>
+    </svg>
+    <div class="brand-text">
+      <h1>VOLTGUARD</h1>
+      <p>Physics-Aware ICS / SCADA Firewall &mdash; Week 1&ndash;2 Build</p>
+    </div>
+  </div>
+  <div class="status-pill" id="status-pill">
+    <span class="dot"></span>
+    <span id="status-label">STANDBY — NO TRAFFIC LOADED</span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- LEFT: control column -->
+  <section class="col col-controls">
+
+    <div class="panel">
+      <h2 class="panel-title"><span class="idx">01</span>Generate Traffic</h2>
+      <p class="panel-sub">Synthesize mock Modbus/TCP frames — normal pump setpoints plus syntactically-valid, physically-dangerous attack commands.</p>
+      <div class="field-row">
+        <label>Normal frames
+          <input type="number" id="input-normal" value="20" min="0" max="200">
+        </label>
+        <label>Malicious frames
+          <input type="number" id="input-malicious" value="5" min="0" max="200">
+        </label>
+      </div>
+      <button class="btn btn-primary" id="btn-generate">Generate Traffic</button>
+      <p class="hint" id="generate-hint">No traffic generated yet.</p>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title"><span class="idx">02</span>Run Bridge</h2>
+      <p class="panel-sub">Parse the loaded traffic and feed every pump-speed command into the physics simulation API.</p>
+      <button class="btn btn-accent" id="btn-bridge" disabled>Run Bridge → Physics Engine</button>
+      <div class="summary-grid" id="summary-grid">
+        <div class="summary-cell"><span class="summary-value" id="sum-total">–</span><span class="summary-label">Total</span></div>
+        <div class="summary-cell safe"><span class="summary-value" id="sum-safe">–</span><span class="summary-label">Safe</span></div>
+        <div class="summary-cell danger"><span class="summary-value" id="sum-catastrophic">–</span><span class="summary-label">Catastrophic</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title"><span class="idx">03</span>Live Command Tester</h2>
+      <p class="panel-sub">Send a single setpoint straight to the physics engine — no packet required.</p>
+      <input type="range" id="rpm-slider" min="0" max="70000" step="100" value="1750">
+      <div class="field-row">
+        <input type="number" id="rpm-number" value="1750" min="0" max="70000">
+        <span class="unit">RPM</span>
+      </div>
+      <button class="btn btn-ghost" id="btn-test">Test Command</button>
+
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 200 120" class="gauge">
+          <path d="M 15 105 A 85 85 0 0 1 185 105" class="gauge-track"/>
+          <path id="gauge-fill" d="M 15 105 A 85 85 0 0 1 185 105" class="gauge-fill"/>
+          <line id="gauge-needle" x1="100" y1="105" x2="100" y2="30" class="gauge-needle"/>
+          <circle cx="100" cy="105" r="6" class="gauge-hub"/>
+        </svg>
+        <div class="gauge-readout">
+          <span id="gauge-psi">0.0</span><span class="gauge-unit">psi</span>
+        </div>
+      </div>
+      <div class="verdict-badge" id="verdict-badge">—</div>
+    </div>
+
+  </section>
+
+  <!-- RIGHT: chart + table column -->
+  <section class="col col-main">
+
+    <div class="panel">
+      <h2 class="panel-title"><span class="idx">04</span>Pressure vs. RPM</h2>
+      <p class="panel-sub">Affinity-law prediction P(rpm) = P<sub>rated</sub> · (rpm / rpm<sub>rated</sub>)². Shaded region marks the pipe's catastrophic zone.</p>
+      <div class="chart-wrap">
+        <canvas id="pressure-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="table-panel-head">
+        <h2 class="panel-title"><span class="idx">05</span>Bridge Report</h2>
+        <div class="filter-group" id="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="SAFE">Safe</button>
+          <button class="filter-btn" data-filter="CATASTROPHIC">Catastrophic</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="report-table">
+          <thead>
+            <tr>
+              <th>Frame</th>
+              <th>Txn ID</th>
+              <th>Register</th>
+              <th>RPM</th>
+              <th>Predicted PSI</th>
+              <th>Threshold PSI</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody">
+            <tr class="empty-row"><td colspan="7">Generate traffic and run the bridge to see parsed frames here.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="footer">
+  Packet Interceptor (Python port of C++ parser) → Physics Engine → Bridge Report — inline blocking (Rust IPS) lands in Week 3.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
